@@ -222,6 +222,7 @@ def sync(
                 # check when the merge wants a fresh upload (#159) — otherwise it
                 # would find the watch activity and refuse to upload the named one.
                 existing_id = None
+                uploaded = False
                 if start_time and not merge_forced_fresh:
                     existing_id = find_activity_by_start_time(garmin_client, start_time)
                 if existing_id:
@@ -230,6 +231,7 @@ def sync(
                 else:
                     upload_result = upload_fit(garmin_client, fit_path, workout_start=start_time)
                     activity_id = upload_result.get("activity_id")
+                    uploaded = bool(activity_id)
                     # "replace" strategy (#159): the named upload succeeded, so
                     # delete the watch recording to keep a single activity.
                     if activity_id and merge_delete_id:
@@ -259,7 +261,7 @@ def sync(
                     hevy_updated_at=workout.get("updated_at"),
                     sync_method=sync_method,
                 )
-                if hr_fusion_on and not hr_samples:
+                if hr_fusion_on and uploaded and not hr_samples:
                     logger.warning("  ⚠ No heart-rate data available for %s — activity uploaded without HR", wid)
                     stats["no_hr"] += 1
                 stats["synced"] += 1
